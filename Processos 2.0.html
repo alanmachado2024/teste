@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Processos - LS FIRE</title>
+    <!-- Inclusão da biblioteca Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Incluir biblioteca Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    
+    <style>
+        /* Estilos do CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #projectInputSection, #mainSection {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-transform: uppercase;
+            box-sizing: border-box;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #processList {
+            margin-top: 20px;
+            max-height: 400px; /* Define a altura máxima */
+            overflow-y: auto; /* Adiciona a barra de rolagem vertical */
+        }
+
+
+        #processContainer {
+            list-style: none;
+            padding: 0;
+        }
+
+        #processContainer li {
+            background: #e9e9e9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .timer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .small-button {
+            width: 35px;
+            height: 35px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .small-button i {
+            font-size: 18px;
+            color: white;
+        }
+
+        .small-button:hover {
+            background: linear-gradient(145deg, #007bff, #0056b3);
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .small-button.playing .fa-play {
+            display: none;
+        }
+
+        .small-button.playing .fa-pause {
+            display: inline;
+        }
+
+        .fa-pause {
+            display: none;
+        }
+
+        .justification {
+            display: none;
+            margin-top: 10px;
+            background: #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .justification-item {
+            margin-bottom: 5px;
+        }
+
+        .name-history {
+            margin-top: 10px;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            display: none;
+        }
+
+        .name-history-item {
+            margin-bottom: 5px;
+        }
+
+        .start-time, .end-time {
+            margin-top: 10px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            display: none;
+        }
+
+        @keyframes blinkGreen {
+            0% { background-color: #007bff; }
+            50% { background-color: #28a745; }
+            100% { background-color: #007bff; }
+        }
+
+        @keyframes blinkYellow {
+            0% { background-color: #007bff; }
+            50% { background-color: #ffc107; }
+            100% { background-color: #007bff; }
+        }
+
+        .blinking-green {
+            animation: blinkGreen 1s infinite;
+        }
+
+        .blinking-yellow {
+            animation: blinkYellow 1s infinite;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 40px;
+            }
+
+            #projectInputSection, #mainSection {
+                max-width: 800px;
+                padding: 30px;
+            }
+
+            input[type="text"] {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            button {
+                padding: 15px;
+            }
+
+            #processContainer li {
+                padding: 15px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            #projectInputSection, #mainSection {
+                max-width: 1000px;
+                padding: 40px;
+            }
+
+            input[type="text"] {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            button {
+                padding: 20px;
+            }
+
+            #processContainer li {
+                padding: 20px;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="projectInputSection">
+        <h1>SGP:LSF</h1>
+        <label for="projectName">Inserir o nome do projeto:</label>
+        <input type="text" id="projectName">
+        <button onclick="setProjectName()">Confirmar</button>
+    </div>
+
+    <div id="mainSection" style="display: none;">
+        <h2 id="systemTitle">Sistema de Gestão de Processos - LS FIRE</h2>
+        <h3 id="projectTitle"></h3>
+        <div id="processForm">
+            <label for="processName">Processo:</label>
+            <input type="text" id="processName">
+            <label for="executorName">Executor:</label>
+            <input type="text" id="executorName">
+            <button onclick="addProcess()">Adicionar Processo</button>
+        </div>
+        <div id="searchSection">
+            <label for="searchInput">Buscar:</label>
+            <input type="text" id="searchInput" oninput="filterProcesses()" placeholder="Buscar pelo nome do processo ou executor">
+        </div>
+        <div id="processList">
+            <h3>Lista de Processos</h3>
+            <div id="counters"></div>
+            <ul id="processContainer"></ul>
+            <canvas id="processChart" width="400" height="200" oncontextmenu="openChartInNewTab(); return false;"></canvas>
+            <button onclick="exportToPDF()">Exportar para PDF</button>
+
+        </div>
+    </div>
+    
+
+    <script>
+        let totalProcesses = 0;
+        let runningProcesses = 0;
+        let pausedProcesses = 0;
+        let finishedProcesses = 0;
+
+// Função para converter tempo no formato hh:mm:ss para segundos
+        function parseTimeToSeconds(time) {
+            const [hrs, mins, secs] = time.split(':').map(Number);
+        return (hrs * 3600) + (mins * 60) + secs;
+}
+
+// Função para formatar segundos em hh:mm:ss
+        function formatSecondsToTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+        function updateCounters() {
+            const counters = [
+                { label: 'Total de Processos', value: totalProcesses, icon: 'fas fa-clipboard-list' },
+                { label: 'Processos em Execução', value: runningProcesses, icon: 'fas fa-play-circle' },
+                { label: 'Processos Pausados', value: pausedProcesses, icon: 'fas fa-pause-circle' },
+                { label: 'Processos Finalizados', value: finishedProcesses, icon: 'fas fa-check-circle' }
+            ];
+
+            const countersContainer = document.getElementById('counters');
+            countersContainer.innerHTML = '';
+            counters.forEach(counter => {
+                const counterElement = document.createElement('p');
+                counterElement.innerHTML = `<i class="${counter.icon}" style="margin-right: 5px;"></i>${counter.label}: <span>${counter.value}</span>`;
+                countersContainer.appendChild(counterElement);
+            });
+
+            // Atualização do gráfico
+            processChart.data.datasets[0].data = [totalProcesses, runningProcesses, pausedProcesses, finishedProcesses];
+            processChart.update();
+
+        }
+        
+        let projectName = ''; // Adicione esta linha no início do seu código <script>
+
+        function setProjectName() {
+            const projectNameInput = document.getElementById('projectName');
+            const projectName = projectNameInput.value.toUpperCase();
+            if (projectName.trim() !== '') {
+                document.getElementById('projectTitle').innerText = projectName;
+                document.getElementById('projectInputSection').style.display = 'none';
+                document.getElementById('mainSection').style.display = 'block';
+                // Atualize o título do gráfico
+                processChart.options.plugins.title.text = `Gráfico de Processos - Projeto: ${projectName}`;
+                processChart.update();
+            } else {
+                alert('Por favor, insira o nome do projeto.');
+            }
+        }
+
+        function addProcess() {
+            const processNameInput = document.getElementById('processName');
+            const executorNameInput = document.getElementById('executorName');
+            const processName = processNameInput.value.toUpperCase();
+            const executorName = executorNameInput.value.toUpperCase();
+            
+            if (processName.trim() !== '' && executorName.trim() !== '') {
+                const processContainer = document.getElementById('processContainer');
+
+                const newProcess = document.createElement('li');
+                newProcess.innerHTML = `
+                    <div>
+                        <div><strong>Processo:</strong> <strong>${processName}</strong> - <strong>Executor:</strong> <strong class="editable-executor" onclick="makeEditable(this)">${executorName}</strong></div>
+                        <div class="timer">
+                            <div>Tempo Total de Processo: <span class="total-time">00:00:00</span></div>
+                            <div>Tempo Real de Trabalho: <span class="work-time">00:00:00</span></div>
+                        </div>
+                    </div>
+                    <div class="button-container">
+                        <button class="small-button play-pause-button" onclick="toggleWork(this)">
+                            <i class="fas fa-play play-icon"></i>
+                            <i class="fas fa-pause pause-icon"></i>
+                        </button>
+                        <button class="small-button stop-button" onclick="confirmFinishProcess(this)">
+                            <i class="fas fa-stop"></i>
+                        </button>
+                    </div>
+                    <div class="start-time"></div>
+                    <div class="end-time"></div>
+                    <div class="justification"></div>
+                    <div class="name-history"></div>
+                `;
+
+                processContainer.appendChild(newProcess);
+
+                processNameInput.value = '';
+                executorNameInput.value = '';
+
+                // Inicialização do cronômetro e timers
+                newProcess.totalSeconds = 0;
+                newProcess.workSeconds = 0;
+                newProcess.totalTimer = null;
+                newProcess.workTimer = null;
+
+                newProcess.pauseTimes = [];
+                newProcess.nameHistory = [];
+
+                totalProcesses++;
+                updateCounters();
+            } else {
+                alert('Por favor, preencha todos os campos.');
+            }
+        }
+
+        function resetProcess(processElement) {
+            clearInterval(processElement.totalTimer);
+            clearInterval(processElement.workTimer);
+
+            const workTimeElement = processElement.querySelector('.work-time');
+            const totalTimeElement = processElement.querySelector('.total-time');
+
+            workTimeElement.textContent = '00:00:00';
+            totalTimeElement.textContent = '00:00:00';
+
+            processElement.totalSeconds = 0;
+            processElement.workSeconds = 0;
+            processElement.totalTimer = null;
+            processElement.workTimer = null;
+
+            processElement.pauseTimes = [];
+        }
+
+        function filterProcesses() {
+    const searchText = document.getElementById('searchInput').value.toUpperCase();
+    const processes = document.querySelectorAll('#processContainer li');
+    processes.forEach(process => {
+        const processContent = process.querySelector('div').innerText.toUpperCase();
+        if (processContent.includes(searchText)) {
+            process.style.display = '';
+        } else {
+            process.style.display = 'none';
+        }
+    });
+        }
+
+        function toggleWork(button) {
+    const processElement = button.parentElement.parentElement;
+    const workTimeElement = processElement.querySelector('.work-time');
+    const totalTimeElement = processElement.querySelector('.total-time');
+    const playIcon = button.querySelector('.fa-play');
+    const pauseIcon = button.querySelector('.fa-pause');
+    const startTimeElement = processElement.querySelector('.start-time');
+
+    const currentTime = new Date();
+
+    if (processElement.workTimer) {
+        const justification = prompt('Por favor, forneça uma justificativa para pausar o processo:');
+        if (justification) {
+            clearInterval(processElement.workTimer);
+            processElement.workTimer = null;
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            button.classList.remove('blinking-green');
+            button.classList.add('blinking-yellow');
+
+            const justificationElement = processElement.querySelector('.justification');
+            const newJustification = document.createElement('div');
+            newJustification.className = 'justification-item';
+            newJustification.innerHTML = `Justificativa para pausa: ${justification} (Pausado em: ${totalTimeElement.textContent})`;
+            justificationElement.appendChild(newJustification);
+
+            processElement.pauseStartTime = currentTime;
+            processElement.pauseTimes.push(processElement.pauseStartTime);
+
+            justificationElement.style.display = 'block';
+
+            runningProcesses--;
+            pausedProcesses++;
+            updateCounters();
+        }
+    } else {
+        if (!processElement.startTime) {
+            processElement.startTime = currentTime;
+            startTimeElement.textContent = `Início: ${currentTime.toLocaleString()}`;
+            startTimeElement.style.display = 'block';
+        }
+        processElement.workTimer = setInterval(() => {
+            processElement.workSeconds++;
+            workTimeElement.textContent = formatTime(processElement.workSeconds);
+        }, 1000);
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+        button.classList.add('blinking-green');
+        button.classList.remove('blinking-yellow');
+        if (!processElement.totalTimer) {
+            processElement.totalTimer = setInterval(() => {
+                processElement.totalSeconds++;
+                totalTimeElement.textContent = formatTime(processElement.totalSeconds);
+            }, 1000);
+        }
+
+        const pauseEndTime = new Date();
+        if (processElement.pauseTimes.length > 0) {
+            const pauseDuration = (pauseEndTime - processElement.pauseTimes[processElement.pauseTimes.length - 1]) / 1000;
+            const justificationElement = processElement.querySelector('.justification');
+            const lastJustification = justificationElement.lastElementChild;
+            if (lastJustification) {
+                lastJustification.innerHTML += ` (Tempo de pausa: ${formatTime(pauseDuration)})`;
+            }
+            processElement.pauseSeconds = (processElement.pauseSeconds || 0) + pauseDuration; // Adiciona o tempo de pausa
+        }
+
+        if (pausedProcesses > 0) {
+            pausedProcesses--;
+        }
+        runningProcesses++;
+        updateCounters();
+    }
+
+    button.classList.toggle('playing');
+}
+
+        function confirmFinishProcess(button) {
+            if (confirm('Você tem certeza que deseja finalizar o processo?')) {
+                finishProcess(button);
+            }
+        }
+
+        function finishProcess(button) {
+            const processElement = button.parentElement.parentElement;
+            const endTimeElement = processElement.querySelector('.end-time');
+
+            clearInterval(processElement.workTimer);
+            clearInterval(processElement.totalTimer);
+
+            processElement.style.backgroundColor = "#d4edda";
+            button.parentElement.querySelector('.play-pause-button').style.display = 'none';
+            button.style.display = 'none';
+
+            const editableExecutor = processElement.querySelector('.editable-executor');
+            editableExecutor.removeAttribute('onclick');
+
+            const endTime = new Date();
+            endTimeElement.textContent = `Término: ${endTime.toLocaleString()}`;
+            endTimeElement.style.display = 'block';
+
+            if (processElement.workTimer) {
+                runningProcesses--;
+            } else {
+                pausedProcesses--;
+            }
+            finishedProcesses++;
+            updateCounters();
+        }
+
+        function formatTime(seconds) {
+            const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(seconds % 60).padStart(2, '0');
+            return `${hrs}:${mins}:${secs}`;
+        }
+
+        function makeEditable(element) {
+            const processElement = element.closest('li');
+            if (!processElement.querySelector('.stop-button').style.display.includes('none')) {
+                const originalText = element.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = originalText;
+                input.style.textTransform = 'uppercase';
+
+                input.addEventListener('blur', function() {
+                    const newText = input.value.trim().toUpperCase();
+                    if (newText !== '' && newText !== originalText) {
+                        element.textContent = newText;
+
+                        // Atualizar histórico de mudanças
+                        const nameHistoryElement = processElement.querySelector('.name-history');
+                        const totalTimeElement = processElement.querySelector('.total-time').textContent;
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'name-history-item';
+                        historyItem.innerHTML = `Nome alterado de "${originalText}" para "${newText}" em ${totalTimeElement}`;
+                        nameHistoryElement.appendChild(historyItem);
+                        nameHistoryElement.style.display = 'block';
+
+                        processElement.nameHistory.push({
+                            oldName: originalText,
+                            newName: newText,
+                            totalTime: totalTimeElement
+                        });
+                    } else {
+                        element.textContent = originalText;
+                    }
+                    element.style.display = 'inline';
+                });
+
+                input.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        input.blur();
+                    }
+                });
+
+                element.textContent = '';
+                element.style.display = 'inline-block';
+                element.appendChild(input);
+                input.focus();
+                input.select();
+            }
+        }
+
+        // Obter o contexto do canvas
+        const ctx = document.getElementById('processChart').getContext('2d');
+
+      // Criar o gráfico
+const processChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Total', 'Em Execução', 'Pausados', 'Finalizados'],
+        datasets: [{
+            label: 'Processos',
+            data: [totalProcesses, runningProcesses, pausedProcesses, finishedProcesses],
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(153, 102, 255, 0.2)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        plugins: {
+            title: {
+                display: true,
+                text: `Gráfico de Processos - Projeto: ${projectName}` // Adicione esta linha
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+function openChartInNewTab() {
+    const chartCanvas = document.getElementById('processChart');
+    const newCanvas = document.createElement('canvas'); // Criar um novo canvas
+    newCanvas.width = chartCanvas.width * 2; // Dobrar a largura do novo canvas (aumentando a resolução)
+    newCanvas.height = chartCanvas.height * 2; // Dobrar a altura do novo canvas (aumentando a resolução)
+    const ctx = newCanvas.getContext('2d');
+    ctx.drawImage(chartCanvas, 0, 0, newCanvas.width, newCanvas.height); // Desenhar o gráfico no novo canvas com a nova resolução
+    const chartDataURL = newCanvas.toDataURL(); // Converta o gráfico para um URL de dados
+    const newTab = window.open(); // Abra uma nova guia
+    newTab.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Gráfico em Tempo Real</title></head><body><img src="' + chartDataURL + '"><script>setInterval(function() { const parentChartCanvas = window.opener.document.getElementById("processChart"); const parentCanvas = document.createElement("canvas"); parentCanvas.width = parentChartCanvas.width * 2; parentCanvas.height = parentChartCanvas.height * 2; const parentCtx = parentCanvas.getContext("2d"); parentCtx.drawImage(parentChartCanvas, 0, 0, parentCanvas.width, parentCanvas.height); const parentChartDataURL = parentCanvas.toDataURL(); document.querySelector("img").src = parentChartDataURL; }, 1000);</scr' + 'ipt></body></html>'); // Escreva a imagem do gráfico na nova guia e atualize-a em tempo real
+}
+
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const maxLineWidth = pageWidth - margin * 2;
+    const lineHeight = 10;
+    const processSpacing = 12;
+
+    let y = margin; // Posição Y inicial para o texto no PDF
+
+    const projectTitle = document.getElementById('projectTitle').innerText;
+    doc.setFontSize(20);
+    doc.setTextColor(0, 64, 128); // Cor azul suave
+    doc.text(`Projeto: ${projectTitle}`, margin, y);
+    y += 20; // Aumentado para separar o título das informações dos processos
+
+    const processes = document.querySelectorAll('#processContainer li');
+
+    const processDetails = [];
+
+    processes.forEach((processElement) => {
+        const processName = processElement.querySelector('div strong:nth-child(2)').innerText;
+        const executorName = processElement.querySelector('div strong.editable-executor').innerText;
+        const totalTimeText = processElement.querySelector('.total-time').innerText;
+        const workTimeText = processElement.querySelector('.work-time').innerText;
+        const startTime = processElement.querySelector('.start-time').innerText;
+        const endTime = processElement.querySelector('.end-time').innerText;
+        const pauseSeconds = processElement.pauseSeconds || 0; // Obtenha o tempo de pausa acumulado
+
+        const totalTimeSeconds = parseTimeToSeconds(totalTimeText);
+        const workTimeSeconds = parseTimeToSeconds(workTimeText);
+        const difference = totalTimeSeconds - workTimeSeconds;
+
+        const justifications = Array.from(processElement.querySelectorAll('.justification-item')).map(j => j.innerText);
+        const nameHistory = Array.from(processElement.querySelectorAll('.name-history-item')).map(n => n.innerText);
+
+        processDetails.push({
+            processName,
+            executorName,
+            totalTimeText,
+            workTimeText,
+            startTime,
+            endTime,
+            pauseTimeText: formatSecondsToTime(pauseSeconds), // Formate o tempo de pausa em hh:mm:ss
+            totalIdleTimeText: formatSecondsToTime(difference), // Formate o tempo total ocioso em hh:mm:ss
+            justifications,
+            nameHistory
+        });
+    });
+
+    // Função para formatar segundos em hh:mm:ss
+    function formatSecondsToTime(seconds) {
+        const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    // Função para verificar se há espaço suficiente na página para o próximo bloco de texto
+    function checkPageSpace(textLines, currentY) {
+        const requiredHeight = textLines.length * lineHeight + processSpacing;
+        return (currentY + requiredHeight) <= (pageHeight - margin);
+    }
+
+    // Função para desenhar linha de separação
+    function drawSeparatorLine() {
+        doc.setDrawColor(200);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += processSpacing;
+    }
+
+    // Função para adicionar rodapé
+    function addFooter() {
+        const footerY = pageHeight - margin;
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        const date = new Date();
+        const dateString = date.toLocaleDateString();
+        const timeString = date.toLocaleTimeString();
+        doc.text(`Gerado em: ${dateString} ${timeString}`, margin, footerY);
+        doc.text(`SGP:LSF - Sistema de Gestão de Processos - LS Fire`, pageWidth - margin, footerY, { align: 'right' });
+    }
+
+    // Adicionar os detalhes dos processos ao PDF
+    processDetails.forEach((process, index) => {
+        const processTextLines = [
+            `Processo ${index + 1}: ${process.processName}`,
+            `Executor: ${process.executorName}`,
+            `Tempo Total: ${process.totalTimeText}`,
+            `Tempo de Trabalho: ${process.workTimeText}`,
+            `Início: ${process.startTime}`,
+            `Fim: ${process.endTime || ''}`,
+            `Tempo Total de Pausa: ${process.pauseTimeText}`,
+            `Diferença entre Tempo Total e Tempo de Trabalho: ${process.totalIdleTimeText}`
+        ];
+
+        if (process.justifications.length > 0) {
+            processTextLines.push('Justificativas:');
+            process.justifications.forEach(justification => {
+                processTextLines.push(`- ${justification}`);
+            });
+        }
+
+        if (process.nameHistory.length > 0) {
+            processTextLines.push('Histórico de Nomes:');
+            process.nameHistory.forEach(history => {
+                processTextLines.push(`- ${history}`);
+            });
+        }
+
+        // Adiciona as linhas de texto do processo ao PDF, garantindo a quebra de página se necessário
+        const splitText = doc.splitTextToSize(processTextLines.join('\n'), maxLineWidth);
+        if (!checkPageSpace(splitText, y)) {
+            addFooter();
+            doc.addPage();
+            y = margin;
+        }
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
+        doc.text(splitText, margin, y);
+        y += splitText.length * lineHeight;
+
+        drawSeparatorLine();
+    });
+
+    // Classificar os processos com base na diferença
+    processDetails.sort((a, b) => parseTimeToSeconds(a.totalIdleTimeText) - parseTimeToSeconds(b.totalIdleTimeText));
+
+    // Adicionar uma nova página para o ranking de desempenho
+    addFooter();
+    doc.addPage();
+    y = margin; // Reiniciar a posição Y para a nova página
+    doc.setFontSize(18);
+    doc.setTextColor(40, 64, 128); // Cor azul suave
+    doc.text('Ranking de Melhores Desempenhos', margin, y);
+    y += 20;
+
+    // Adicionar o ranking dos processos ao PDF
+    processDetails.forEach((process, index) => {
+        const rankingText = `${index + 1}º: ${process.processName} - Diferença: ${process.totalIdleTimeText}`;
+        const splitRankingText = doc.splitTextToSize(rankingText, maxLineWidth);
+        if (!checkPageSpace(splitRankingText, y)) {
+            addFooter();
+            doc.addPage();
+            y = margin;
+        }
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        doc.text(splitRankingText, margin, y);
+        y += splitRankingText.length * lineHeight + 6; // Add some space between rankings
+    });
+
+    // Classificar os processos com base no tempo de pausa acumulado
+    processDetails.sort((a, b) => parseTimeToSeconds(b.pauseTimeText) - parseTimeToSeconds(a.pauseTimeText));
+
+    // Adicionar uma nova página para o ranking de pausas
+    addFooter();
+    doc.addPage();
+    y = margin; // Reiniciar a posição Y para a nova página
+    doc.setFontSize(18);
+    doc.setTextColor(40, 64, 128); // Cor azul suave
+    doc.text('Ranking de Processos com Mais Pausas', margin, y);
+    y += 20;
+
+    // Adicionar o ranking dos processos ao PDF
+    processDetails.forEach((process, index) => {
+        const pauseRankingText = `${index + 1}º: ${process.processName} - Tempo de Pausa: ${process.pauseTimeText}`;
+        const splitPauseRankingText = doc.splitTextToSize(pauseRankingText, maxLineWidth);
+        if (!checkPageSpace(splitPauseRankingText, y)) {
+            addFooter();
+            doc.addPage();
+            y = margin;
+        }
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        doc.text(splitPauseRankingText, margin, y);
+        y += splitPauseRankingText.length * lineHeight + 6; // Add some space between rankings
+    });
+
+    // Cálculo dos Indicadores Chave
+let totalWorkTime = 0;
+let totalPauseTime = 0;
+let totalIdleTime = 0;
+
+processDetails.forEach(process => {
+    totalWorkTime += parseTimeToSeconds(process.workTimeText);
+    totalPauseTime += parseTimeToSeconds(process.pauseTimeText);
+    totalIdleTime += parseTimeToSeconds(process.totalIdleTimeText);
+});
+
+const averageWorkTime = totalWorkTime / processDetails.length;
+
+// Adicionar uma nova página para o resumo e dashboard
+addFooter();
+doc.addPage();
+y = margin; // Reiniciar a posição Y para a nova página
+
+// Título do Dashboard
+doc.setFontSize(18);
+doc.setTextColor(40, 64, 128); // Cor azul suave
+doc.text('Resumo e Dashboard', margin, y);
+y += 20;
+
+// Adicionar os indicadores chave ao PDF
+doc.setFontSize(14);
+doc.setTextColor(0);
+
+// Formatar os indicadores
+const indicators = [
+    `Total de Tempo de Trabalho: ${formatSecondsToTime(totalWorkTime)}`,
+    `Total de Tempo de Pausa: ${formatSecondsToTime(totalPauseTime)}`,
+    `Total de Tempo Ocioso: ${formatSecondsToTime(totalIdleTime)}`,
+    `Média de Tempo de Trabalho por Processo: ${formatSecondsToTime(averageWorkTime)}`
+];
+
+// Adicionar os indicadores ao PDF
+indicators.forEach(indicator => {
+    const splitIndicator = doc.splitTextToSize(indicator, maxLineWidth);
+    if (!checkPageSpace(splitIndicator, y)) {
+        addFooter();
+        doc.addPage();
+        y = margin;
+    }
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(splitIndicator, margin, y);
+    y += splitIndicator.length * lineHeight + 6; // Add some space between indicators
+});
+
+// Adicionar gráficos simples (opcional e avançado, não incluído aqui)
+
+// Adicionar rodapé final
+addFooter();
+
+// Salvar o documento PDF
+doc.save(`${projectTitle}.pdf`);
+}
+
+    </script>
+    
+</body>
+</html>
